@@ -7,17 +7,17 @@ import MainLayout from './contexts/MainLayout';
 
 //pages
 // Pages
-import Login from './pages/login';
-import ForgotPage from './pages/forgot';
+import Login from './pages/Login';
+import ForgotPage from './pages/Forgot';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ContactsPage from './pages/ContactsPage';
 import ChatDetailsPage from './pages/ChatDetailsPage';
-import EmployeeManagementPage from './pages/employee-manage';
+import EmployeeManagementPage from './pages/Employee-manage';
 import NewJobPage from './pages/New-Job';
-import HrNewJob from './pages/new-job-man';
-import JobAppMan from './pages/job-app-man';
+import HrNewJob from './pages/New-job-man';
+import JobAppMan from './pages/Job-app-man';
 
 
 import './index.css';
