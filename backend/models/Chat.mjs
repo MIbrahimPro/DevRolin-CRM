@@ -1,12 +1,16 @@
 import mongoose from 'mongoose';
 
-const chatSchema = new mongoose.Schema({
-    project: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Project',
-        required: true
+const chatAttachmentSchema = new mongoose.Schema(
+    {
+        name: { type: String },
+        url: { type: String },
+        type: { type: String }
     },
-    messages: [{
+    { _id: false }
+);
+
+const chatMessageSchema = new mongoose.Schema(
+    {
         sender: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Employee',
@@ -16,16 +20,28 @@ const chatSchema = new mongoose.Schema({
             type: String,
             required: true
         },
-        attachments: [{
-            name: String,
-            url: String,
-            type: String
-        }],
+        attachments: {
+            type: [chatAttachmentSchema],
+            default: []
+        },
         createdAt: {
             type: Date,
             default: Date.now
         }
-    }],
+    },
+    { _id: false }
+);
+
+const chatSchema = new mongoose.Schema({
+    project: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Project',
+        required: true
+    },
+    messages: {
+        type: [chatMessageSchema],
+        default: []
+    },
     participants: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Employee'
@@ -35,4 +51,5 @@ const chatSchema = new mongoose.Schema({
 });
 
 export default mongoose.model('Chat', chatSchema);
+
 

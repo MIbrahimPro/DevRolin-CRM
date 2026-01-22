@@ -1,94 +1,82 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import api from '../config/axios'; 
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
+    const context = useContext(AuthContext);
+    if (!context) throw new Error('useAuth must be used within AuthProvider');
+    return context;
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+    const [user, setUser] = useState(null);
+    const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const fetchUser = useCallback(async () => {
+        try {
+            // No need for `${API_URL}/auth/me` because 'api' has the baseURL set
+            const response = await api.get('/auth/me');
+            setUser(response.data.user);
+            setProfile(response.data.profile);
+        } catch (error) {
+            setUser(null);
+            setProfile(null);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-  useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      fetchUser();
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
+    useEffect(() => {
+        fetchUser();
+    }, [fetchUser]);
 
-  const fetchUser = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/auth/me`);
-      setUser(response.data.user);
-      setProfile(response.data.profile);
-    } catch (error) {
-      localStorage.removeItem('token');
-      setToken(null);
-      delete axios.defaults.headers.common['Authorization'];
-    } finally {
-      setLoading(false);
-    }
-  };
+    const login = useCallback(async (email, password) => {
+        try {
+            const response = await api.post('/auth/login', { email, password });
+            setUser(response.data.user);
+            setProfile(response.data.profile);
+            return { success: true };
+        } catch (error) {
+            return { success: false, message: error.response?.data?.message || 'Login failed' };
+        }
+    }, []);
 
-  const login = async (email, password) => {
-    try {
-      const response = await axios.post(`${API_URL}/auth/login`, { email, password });
-      const { token: newToken, user: userData, profile: profileData } = response.data;
-      
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-      setUser(userData);
-      setProfile(profileData);
-      
-      return { success: true };
-    } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Login failed' };
-    }
-  };
+    const logout = useCallback(async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (error) {
+            console.error("Logout failed", error);
+        } finally {
+            setUser(null);
+            setProfile(null);
+        }
+    }, []);
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-    setProfile(null);
-    delete axios.defaults.headers.common['Authorization'];
-  };
+    const updatePreferences = useCallback(async (preferences) => {
+        try {
+            const response = await api.put('/auth/preferences', preferences);
+            setUser(prev => ({ ...prev, preferences: response.data.preferences }));
+            return { success: true };
+        } catch (error) {
+            return { success: false, message: error.response?.data?.message || 'Update failed' };
+        }
+    }, []);
 
-  const updatePreferences = async (preferences) => {
-    try {
-      const response = await axios.put(`${API_URL}/auth/preferences`, preferences);
-      setUser(prev => ({ ...prev, preferences: response.data.preferences }));
-      return { success: true };
-    } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Update failed' };
-    }
-  };
+    const value = useMemo(() => ({
+        user,
+        profile,
+        loading,
+        login,
+        logout,
+        updatePreferences,
+        fetchUser
+    }), [user, profile, loading, login, logout, updatePreferences, fetchUser]);
 
-  return (
-    <AuthContext.Provider value={{
-      user,
-      profile,
-      loading,
-      login,
-      logout,
-      updatePreferences,
-      fetchUser
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
-

@@ -16,12 +16,14 @@ const questionSchema = new mongoose.Schema({
         required: true
     },
     answer: {
-        type: String,
-        answeredBy: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Client'
-        },
-        answeredAt: Date
+        type: String
+    },
+    answeredBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Client'
+    },
+    answeredAt: {
+        type: Date
     },
     status: {
         type: String,
@@ -33,4 +35,5 @@ const questionSchema = new mongoose.Schema({
 });
 
 export default mongoose.model('Question', questionSchema);
+
 

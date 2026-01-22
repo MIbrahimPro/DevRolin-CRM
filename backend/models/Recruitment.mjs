@@ -98,3 +98,4 @@ const recruitmentSchema = new mongoose.Schema({
 
 export default mongoose.model('Recruitment', recruitmentSchema);
 
+
